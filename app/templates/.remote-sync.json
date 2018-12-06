@@ -1,0 +1,19 @@
+{
+  "logger": {
+    "title": "Remote Sync"
+  },
+  "uploadOnSave": true,
+  "useAtomicWrites": false,
+  "deleteLocal": true,
+  "hostname": "alittleunique.asuscomm.com",
+  "port": "22",
+  "target": "Documents/Galvanize/Capstone-2/",
+  "ignore": [
+    ".remote-sync.json",
+    ".git/**"
+  ],
+  "username": "julia",
+  "password": "0903656",
+  "watch": [],
+  "transport": "scp"
+}
