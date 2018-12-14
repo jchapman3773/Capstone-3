@@ -48,8 +48,8 @@ def upload_file():
                 file_ext = '.'+ filename.rsplit('.', 1)[1].lower()
                 new_filename = uuid4().hex + "_" + str(height) + file_ext
                 # upload to database
-                df = pd.DataFrame.from_dict({'image':new_filename,
-                                            'height_inch':height})
+                df = pd.DataFrame.from_dict({'image':[new_filename],
+                                            'height_inch':[height]})
                 df.to_sql('heights',con=engine,if_exists='append')
                 # upload to bucket
                 obj = bucket.Object('heights.csv')
