@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
 
-# engine = create_engine('postgresql://banana:forscale@aax75phbsu5xo7.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/aax75phbsu5xo7')
+engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
@@ -41,15 +41,16 @@ def upload_file():
             if feet == '' or inches == '':
                 return 'Error: Blank entry in form. Please fill out entire form.'
             if feet.isprintable() and inches.isprintable():
-                # df = predict()
-                # df.to_sql('heights',con=engine,if_exists='append')
-                # txt = engine.execute("SELECT * FROM heights").fetchall()
-                # txt = [str(line) for line in txt[:-10:-1]]
-                # txt = '<br>'.join(txt)
+                # df_new = pd.read_sql_table('test',con=engine)
                 height = (float(feet)*12)+float(inches)
                 filename = secure_filename(file.filename)
                 file_ext = '.'+ filename.rsplit('.', 1)[1].lower()
                 new_filename = uuid4().hex + "_" + str(height) + file_ext
+                # upload to database
+                df = pd.DataFrame.from_dict({'image':new_filename,
+                                            'height_inch':height})
+                df.to_sql('heights',con=engine,if_exists='append')
+                # upload to bucket
                 obj = bucket.Object('heights.csv')
                 prev = obj.get()['Body'].read().decode('utf-8')
                 new = prev + '\n' + new_filename + ',' + str(height)
