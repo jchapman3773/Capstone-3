@@ -1,3 +1,4 @@
+import pandas as pd
 from uuid import uuid4
 from flask import Flask, request, redirect, render_template
 from werkzeug.utils import secure_filename
@@ -78,8 +79,9 @@ def prediction():
             x = preprocess_input(x)
             x = expand_dims(x, axis=0)
             pred = model.predict(x)
+            key = {0:'Banana', 1:'Both', 2:'Neither', 3:'Person'}
             K.clear_session()
-            return render_template('prediction_answer.html',variable=pred)
+            return render_template('prediction_answer.html',variable=[pred,key])
         else:
             return redirect(request.url)
     return render_template('prediction.html')
