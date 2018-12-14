@@ -19,6 +19,12 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 application = Flask(__name__)
 
+@application.route('/testdb',methods=['GET','POST'])
+def testdb():
+    engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
+    df_new = pd.read_sql_table('heights',con=engine)
+    return str(df_new.iloc[:,:])
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -42,7 +48,6 @@ def upload_file():
             if feet == '' or inches == '':
                 return 'Error: Blank entry in form. Please fill out entire form.'
             if feet.isprintable() and inches.isprintable():
-                # df_new = pd.read_sql_table('test',con=engine)
                 height = (float(feet)*12)+float(inches)
                 filename = secure_filename(file.filename)
                 file_ext = '.'+ filename.rsplit('.', 1)[1].lower()
@@ -74,7 +79,7 @@ def prediction():
             return 'Error: No file name, please try again'
         if file and allowed_file(file.filename):
             model = load_model('models/transfer_CNN.h5')
-            img = image.load_img(file, target_size=(400, 400))
+            img = image.load_img(file, target_size=(800, 800))
             x = image.img_to_array(img)
             x = preprocess_input(x)
             x = expand_dims(x, axis=0)
