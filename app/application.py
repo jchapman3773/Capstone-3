@@ -1,12 +1,18 @@
-import os
 from uuid import uuid4
 from flask import Flask, request, redirect, render_template
 from werkzeug.utils import secure_filename
-import boto3
+from boto3 import resource, client
+from keras.models import load_model
+from keras.applications.xception import preprocess_input
+from keras import backend as K
+from keras.preprocessing import image
+from numpy import expand_dims
+from sqlalchemy import create_engine
 
-# UPLOAD_FOLDER = 'uploads/'
-s3 = boto3.resource('s3')
+s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
+
+# engine = create_engine('postgresql://banana:forscale@aax75phbsu5xo7.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/aax75phbsu5xo7')
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
@@ -35,6 +41,11 @@ def upload_file():
             if feet == '' or inches == '':
                 return 'Error: Blank entry in form. Please fill out entire form.'
             if feet.isprintable() and inches.isprintable():
+                # df = predict()
+                # df.to_sql('heights',con=engine,if_exists='append')
+                # txt = engine.execute("SELECT * FROM heights").fetchall()
+                # txt = [str(line) for line in txt[:-10:-1]]
+                # txt = '<br>'.join(txt)
                 height = (float(feet)*12)+float(inches)
                 filename = secure_filename(file.filename)
                 file_ext = '.'+ filename.rsplit('.', 1)[1].lower()
@@ -51,12 +62,54 @@ def upload_file():
             return redirect(request.url)
     return render_template('upload.html')
 
+@application.route('/prediction', methods=['GET', 'POST'])
+def prediction():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'Error: No file part, please try again'
+        file = request.files['file']
+        if file.filename == '':
+            return 'Error: No file name, please try again'
+        if file and allowed_file(file.filename):
+            model = load_model('models/transfer_CNN.h5')
+            img = image.load_img(file, target_size=(400, 400))
+            x = image.img_to_array(img)
+            x = preprocess_input(x)
+            x = expand_dims(x, axis=0)
+            pred = model.predict(x)
+            K.clear_session()
+            return render_template('prediction_answer.html',variable=pred)
+        else:
+            return redirect(request.url)
+    return render_template('prediction.html')
+
 @application.route('/success', methods=['GET'])
 def success():
     return '''
     <!DOCTYPE html>
         <body>
             <h1 align="center">File Upload Success!</h1>
+        </body>
+    '''
+
+@application.route('/form', methods=['GET','POST'])
+def form():
+    if request.method == 'POST':
+        comments = request.form['comments']
+        client = client('s3')
+        client.put_object(Body=comments,Bucket='bananaforscale',Key=f'comments/{uuid4().hex}.txt')
+        return redirect('/success')
+    return '''
+    <!DOCTYPE html>
+        <body>
+            <form method=POST enctype=multipart/form-data>
+                <div class="form-group">
+                    <label for="comments">Questions, Comments, Errors, etc:</label>
+                    <br>
+                    <input type="comments" class="form-control" placeholder="Type Here" name="comments">
+                </div>
+                <button type="submit" class="btn btn-primary" value=Upload>Submit</button>
+            </form>
         </body>
     '''
 
