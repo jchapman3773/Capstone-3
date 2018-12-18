@@ -1,4 +1,5 @@
 from PIL import Image
+import os
 
 def fix_orientation(filename):
     img = Image.open(filename)
@@ -32,18 +33,34 @@ def fix_orientation(filename):
     return img
 
 def save_imgs(dir):
-    import os
     count = 0
     # TEST_IMAGE_PATHS = []
     filenames = os.listdir(dir)
-    for i in filenames:
+    for f in filenames:
         count += 1
-        path = os.path.join(dir,i)
+        path = os.path.join(dir,f)
         img = fix_orientation(path)
         img.save(path)
 
     print(f'{count} images resaved')
 
+def list_orientations(dir):
+    filenames = os.listdir(dir)
+    for f in filenames:
+        path = os.path.join(dir,f)
+        img = Image.open(path)
+        if hasattr(img, '_getexif'):
+            exifdata = img._getexif()
+            try:
+                orientation = exifdata.get(274)
+            except:
+                # There was no EXIF Orientation Data
+                orientation = 1
+        else:
+            orientation = 1
+        print(f'{orientation} : {f}')
+
 if __name__ == '__main__':
     dir = '../data/uploads'
     save_imgs(dir)
+    # list_orientations(dir)

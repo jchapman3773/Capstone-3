@@ -19,6 +19,7 @@ from keras.models import Sequential, load_model
 from keras import callbacks
 from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
+from root_mean_squared_error import root_mean_squared_error
 mpl.style.use('classic')
 
 # for reproducibility
@@ -75,7 +76,6 @@ class TransferModel():
             vertical_flip=True,
             validation_split=0.15)
 
-        # train_label_df = pd.read_csv('../data/heights.csv')
         engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
         train_label_df = pd.read_sql_table('heights',con=engine)
         print(train_label_df.shape)
@@ -161,7 +161,7 @@ class TransferModel():
                 opt = optimizers[1]
             self._change_trainable_layers(freeze_indices[i])
             self.model.compile(optimizer=opt,
-                          loss='mean_squared_error')
+                          loss=root_mean_squared_error)
 
             history = self.model.fit_generator(self.train_generator,
                                       steps_per_epoch=len(self.train_generator),
@@ -173,7 +173,7 @@ class TransferModel():
         return histories
 
     def best_training_model(self):
-        model = load_model('models/transfer_CNN_reg.h5')
+        model = load_model('models/transfer_CNN_reg.h5',custom_objects={'root_mean_squared_error': root_mean_squared_error})
         pred = model.predict_generator(self.validation_generator,
                                                 steps=len(self.validation_generator))
         pred = np.array(pred).reshape(-1,1)
@@ -198,8 +198,8 @@ class TransferModel():
         hist_val_acc = np.hstack(self._hstack_histories(histories,'val_loss'))
         plt.plot(hist_acc)
         plt.plot(hist_val_acc)
-        plt.title('Model Mean Squared Error')
-        plt.ylabel('MSE')
+        plt.title('Model Root Mean Squared Error')
+        plt.ylabel('RMSE')
         plt.ylim(top=max(hist_acc))
         plt.xlabel('Epoch')
         plt.axvline(5,color='k',linestyle='dotted')
@@ -207,7 +207,7 @@ class TransferModel():
         plt.axvline(25,color='k',linestyle='dotted')
         plt.legend(['Train', 'Test'], loc='upper left')
         plt.tight_layout()
-        plt.savefig('../graphics/Transfer_CNN_reg_mse_hist.png')
+        plt.savefig('../graphics/Transfer_CNN_reg_rmse_hist.png')
         plt.close()
 
 if __name__ == '__main__':
