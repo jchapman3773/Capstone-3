@@ -161,14 +161,20 @@ def predict_height():
     #         return render_template('prediction_answer.html',variable=[pred,key])
     #     else:
     #         return redirect(request.url)
-    return render_template('prediction.html',Title='Height Prediction with Object Detection')
+    # return render_template('prediction.html',Title='Height Prediction with Object Detection')
+    return '''
+    <!DOCTYPE html>
+        <body>
+            <h1 align="center">Sorry, this page is under construction...</h1>
+        </body>
+    '''
 
 @application.route('/form', methods=['GET','POST'])
 def form():
     if request.method == 'POST':
         comments = request.form['comments']
-        client = client('s3')
-        client.put_object(Body=comments,Bucket='bananaforscale',Key=f'comments/{uuid4().hex}.txt')
+        c = client('s3')
+        c.put_object(Body=comments,Bucket='bananaforscale',Key=f'comments/{uuid4().hex}.txt')
         return redirect('/success')
     return render_template('form.html')
 
