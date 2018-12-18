@@ -1,4 +1,5 @@
 import pandas as pd
+from io import BytesIO
 from uuid import uuid4
 from flask import Flask, request, redirect, render_template
 from werkzeug.utils import secure_filename
@@ -9,6 +10,7 @@ from keras import backend as K
 from keras.preprocessing import image
 from numpy import expand_dims
 from sqlalchemy import create_engine
+from fix_image_orientation import fix_orientation
 
 s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
@@ -56,12 +58,19 @@ def upload_file():
                 df = pd.DataFrame.from_dict({'image':[new_filename],
                                             'height_inch':[height]})
                 df.to_sql('heights',con=engine,if_exists='append')
-                # upload to bucket
+                # upload height to bucket csv
                 obj = bucket.Object('heights.csv')
                 prev = obj.get()['Body'].read().decode('utf-8')
                 new = prev + '\n' + new_filename + ',' + str(height)
                 obj.put(Body=new,Key='heights.csv')
-                bucket.upload_fileobj(file,f'uploads/{new_filename}')
+                # upload image to bucket
+                file = fix_orientation(file)
+                format = file.format
+                buffer = BytesIO()
+                file.save(buffer,format)
+                buffer.seek(0) # rewind pointer
+                bucket.put_object(Key=f'uploads/{new_filename}',Body=buffer,
+                                    ContentType=f'image/{format}')
             else:
                 return 'Error: Non-Printable characters. Please try again.'
             return redirect('/success')
