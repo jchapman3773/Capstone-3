@@ -10,20 +10,30 @@
 <div class="container" align="center">
   <div class="jumbotron">
     <h1>Banana For Scale</h1>
-    <h4>Data Science project using CNNs and Transfer Learning</h4>
+    <h4>Data Science project using Transfer Learning CNNs and Object Detection</h4>
     <br>
     <h2>Goal: Predict a person's height based on a banana</h2>
-    <h4><i>Prediction model comming soon. Check back December 21st, 2018 for completed project</i></h4>
   </div>
   <form action="/upload", method="GET">
     <h5>Help me by contibuting to the data!</h5>
     <button type="submit" class="btn btn-primary">Upload Your Image Now</button>
   </form>
-  <form action="/class_prediction", method="GET">
-    <button type="submit" class="btn btn-success">Classification Prediction</button>
+  <br>
+  <br>
+  <br>
+  <form action="/predict_height", method="GET">
+    <button type="submit" class="btn btn-success btn-lg"><b>Predict Your Height!</b></button>
+  </form>
+  <br>
+  <br>
+  <p> Prediction with Xception:</p>
+  <form action="/xception_class", method="GET">
+    <button type="submit" class="btn">Classification</button>
+  </form>
+  <form action="/xception_reg", method="GET">
+    <button type="submit" class="btn">Regression</button>
   </form>
 </div>
-<br>
 <br>
 <br>
 <br>
@@ -32,10 +42,10 @@
       <button type="submit" class="btn btn-default">My Linkedin</button>
     </form>
     <form action="https://github.com/jchapman3773/Capstone-2", method="GET">
-      <button type="submit" class="btn btn-default">Github for Project: Part 1</button>
+      <button type="submit" class="btn btn-default">Project Github: Part 1</button>
     </form>
     <form action="https://github.com/jchapman3773/Capstone-3", method="GET">
-      <button type="submit" class="btn btn-default">Github for Project: Part 2</button>
+      <button type="submit" class="btn btn-default">Project Github: Part 2</button>
     </form>
     <form action="/form", method="GET">
       <br>

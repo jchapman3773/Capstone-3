@@ -1,4 +1,3 @@
-<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,17 +7,14 @@
 </head>
 
 <body>
-
-<div class="container" align='center'>
-  <div class="jumbotron">
-    <h2>Your prediction is...</h2>
-    <h1>{{variable[0]}}</h1>
-    <p>{{variable[1]}}</p>
+  <div class="jumbotron" align=center>
+    <form method=POST enctype=multipart/form-data>
+        <div class="form-group">
+            <label for="comments">Questions, Comments, Errors, etc:</label>
+            <br>
+            <input type="comments" class="form-control" placeholder="Type Here" name="comments">
+        </div>
+        <button type="submit" class="btn btn-primary" value=Upload>Submit</button>
+    </form>
   </div>
-  <form action="/", method="GET">
-    <button type="submit" class="btn btn-success btn-lg"><b>Home</b></button>
-  </form>
-</div>
-
 </body>
-</html>

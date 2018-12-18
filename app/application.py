@@ -8,9 +8,10 @@ from keras.models import load_model
 from keras.applications.xception import preprocess_input
 from keras import backend as K
 from keras.preprocessing import image
-from numpy import expand_dims
+from numpy import expand_dims, argmax
 from sqlalchemy import create_engine
 from fix_image_orientation import fix_orientation
+from root_mean_squared_error import root_mean_squared_error
 
 s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
@@ -83,28 +84,6 @@ def upload_file():
             return redirect(request.url)
     return render_template('upload.html')
 
-@application.route('/class_prediction', methods=['GET', 'POST'])
-def class_prediction():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return 'Error: No file part, please try again'
-        file = request.files['file']
-        if file.filename == '':
-            return 'Error: No file name, please try again'
-        if file and allowed_file(file.filename):
-            model = load_model('models/transfer_CNN.h5')
-            img = image.load_img(file, target_size=(800, 800))
-            x = image.img_to_array(img)
-            x = preprocess_input(x)
-            x = expand_dims(x, axis=0)
-            pred = model.predict(x)
-            key = {0:'Banana', 1:'Both', 2:'Neither', 3:'Person'}
-            K.clear_session()
-            return render_template('prediction_answer.html',variable=[pred,key])
-        else:
-            return redirect(request.url)
-    return render_template('prediction.html')
-
 @application.route('/success', methods=['GET'])
 def success():
     return '''
@@ -114,6 +93,76 @@ def success():
         </body>
     '''
 
+@application.route('/xception_class', methods=['GET', 'POST'])
+def xception_class():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'Error: No file part, please try again'
+        file = request.files['file']
+        if file.filename == '':
+            return 'Error: No file name, please try again'
+        if file and allowed_file(file.filename):
+            K.clear_session()
+            model = load_model('models/transfer_CNN.h5')
+            img = image.load_img(file, target_size=(800, 800))
+            x = image.img_to_array(img)
+            x = preprocess_input(x)
+            x = expand_dims(x, axis=0)
+            pred = model.predict(x)
+            idx = argmax(pred)
+            key = {0:'a Banana', 1:'both a Banana and a Person', 2:'neither a Banana nor a Person', 3:'a Person'}
+            pred = round(pred[0,idx]*100,2)
+            key[idx]
+            return render_template('prediction_answer.html',variable=[f'Your image has {key[idx]}',f'with {pred}% confidence'])
+        else:
+            return redirect(request.url)
+    return render_template('prediction.html',Title='Classification Prediction with Xception')
+
+@application.route('/xception_reg', methods=['GET', 'POST'])
+def xception_reg():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'Error: No file part, please try again'
+        file = request.files['file']
+        if file.filename == '':
+            return 'Error: No file name, please try again'
+        if file and allowed_file(file.filename):
+            K.clear_session()
+            model = load_model('models/transfer_CNN_reg.h5',custom_objects={'root_mean_squared_error': root_mean_squared_error})
+            img = image.load_img(file, target_size=(800, 800))
+            x = image.img_to_array(img)
+            x = preprocess_input(x)
+            x = expand_dims(x, axis=0)
+            pred = model.predict(x)[0][0]
+            ft = int(pred // 12)
+            inch = round(pred % 12,1)
+            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in',''])
+        else:
+            return redirect(request.url)
+    return render_template('prediction.html',Title='Regression Prediction with Xception')
+
+@application.route('/predict_height', methods=['GET', 'POST'])
+def predict_height():
+    # if request.method == 'POST':
+    #     if 'file' not in request.files:
+    #         return 'Error: No file part, please try again'
+    #     file = request.files['file']
+    #     if file.filename == '':
+    #         return 'Error: No file name, please try again'
+    #     if file and allowed_file(file.filename):
+    #         K.clear_session()
+    #         model = load_model('models/transfer_CNN.h5')
+    #         img = image.load_img(file, target_size=(800, 800))
+    #         x = image.img_to_array(img)
+    #         x = preprocess_input(x)
+    #         x = expand_dims(x, axis=0)
+    #         pred = model.predict(x)
+    #         key = {0:'Banana', 1:'Both', 2:'Neither', 3:'Person'}
+    #         return render_template('prediction_answer.html',variable=[pred,key])
+    #     else:
+    #         return redirect(request.url)
+    return render_template('prediction.html',Title='Height Prediction with Object Detection')
+
 @application.route('/form', methods=['GET','POST'])
 def form():
     if request.method == 'POST':
@@ -121,19 +170,7 @@ def form():
         client = client('s3')
         client.put_object(Body=comments,Bucket='bananaforscale',Key=f'comments/{uuid4().hex}.txt')
         return redirect('/success')
-    return '''
-    <!DOCTYPE html>
-        <body>
-            <form method=POST enctype=multipart/form-data>
-                <div class="form-group">
-                    <label for="comments">Questions, Comments, Errors, etc:</label>
-                    <br>
-                    <input type="comments" class="form-control" placeholder="Type Here" name="comments">
-                </div>
-                <button type="submit" class="btn btn-primary" value=Upload>Submit</button>
-            </form>
-        </body>
-    '''
+    return render_template('form.html')
 
 if __name__ == '__main__':
     application.run(debug=True)
