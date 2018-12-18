@@ -17,8 +17,7 @@ from keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, load_model
 from keras import callbacks
-# from print_pretty_confusion_matrix import plot_confusion_matrix_from_data
-# from sklearn.metrics import classification_report
+from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
 mpl.style.use('classic')
 
@@ -76,7 +75,10 @@ class TransferModel():
             vertical_flip=True,
             validation_split=0.15)
 
-        train_label_df = pd.read_csv('../data/heights.csv')
+        # train_label_df = pd.read_csv('../data/heights.csv')
+        engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
+        train_label_df = pd.read_sql_table('heights',con=engine)
+        print(train_label_df.shape)
         self.train_generator = train_datagen.flow_from_dataframe(
                                             dataframe=train_label_df,
                                             directory=directory,
@@ -209,7 +211,7 @@ class TransferModel():
         plt.close()
 
 if __name__ == '__main__':
-    dir = '../data/pictures/'
+    dir = '../data/uploads/'
 
     transfer_CNN = TransferModel()
     transfer_CNN.make_generators(dir)
