@@ -1,2 +1,4 @@
 data/
 app/models/
+src/models/
+src/tensorboard_logs/
