@@ -23,7 +23,6 @@ application = Flask(__name__)
 
 @application.route('/testdb',methods=['GET','POST'])
 def testdb():
-    engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
     df_new = pd.read_sql_table('heights',con=engine)
     return str(df_new.iloc[:,:])
 
@@ -65,7 +64,13 @@ def upload_file():
                 obj.put(Body=new,Key='heights.csv')
                 # upload image to bucket
                 file = fix_orientation(file)
-                format = file.format
+                try:
+                    if file.format.lower() not in ALLOWED_EXTENSIONS:
+                        format = 'JPEG'
+                    else:
+                        format = file.format
+                except:
+                    format = 'JPEG'
                 buffer = BytesIO()
                 file.save(buffer,format)
                 buffer.seek(0) # rewind pointer
@@ -78,8 +83,8 @@ def upload_file():
             return redirect(request.url)
     return render_template('upload.html')
 
-@application.route('/prediction', methods=['GET', 'POST'])
-def prediction():
+@application.route('/class_prediction', methods=['GET', 'POST'])
+def class_prediction():
     if request.method == 'POST':
         if 'file' not in request.files:
             return 'Error: No file part, please try again'
