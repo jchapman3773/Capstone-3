@@ -1,6 +1,6 @@
 from sklearn.linear_model import ElasticNetCV
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from statsmodels.stats import outliers_influence
 import statsmodels.api as sm
-from joblib import dump, load
+from joblib import dump
 from math import sqrt
 np.random.seed(42)
 
@@ -26,7 +26,8 @@ def data(remove_cols):
     X = df.drop(columns=remove_cols)
 
     scaler = StandardScaler()
-    X_scale = scaler.fit_transform(X,y)
+    X_scale = scaler.fit_transform(X)
+    dump(scaler,'models/scaler.joblib')
 
     X_train, X_test, y_train, y_test = train_test_split(X_scale, y, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test, X
@@ -44,6 +45,7 @@ def linear():
 
     print(f'R^2: {model.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
+    print(f'MAE: {mean_absolute_error(y_test,prediction)}')
 
     for idx, col in enumerate(X.columns):
         print(f"{col}, {outliers_influence.variance_inflation_factor(X.values,idx)}")
@@ -56,7 +58,8 @@ def linear():
 def forest():
     print('---------- RANDOM FOREST MODEL ----------')
     remove_cols = ['filename','image','index_x','index_y']
-    X_train, X_test, y_train, y_test, _ = data(remove_cols)
+    X_train, X_test, y_train, y_test, X = data(remove_cols)
+    # print(X.info())
     regr = RandomForestRegressor()
     regr.fit(X_train,y_train)
     print(f'Feature Importances: {regr.feature_importances_}')
@@ -65,13 +68,14 @@ def forest():
 
     print(f'R^2: {regr.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
+    print(f'MAE: {mean_absolute_error(y_test,prediction)}')
 
     dump(regr,'models/randomforest.joblib')
 
 def boost():
     print('---------- GRADIENT BOOST MODEL ----------')
     remove_cols = ['filename','image','index_x','index_y']
-    X_train, X_test, y_train, y_test, _ = data(remove_cols)
+    X_train, X_test, y_train, y_test, X = data(remove_cols)
     regr = GradientBoostingRegressor()
     regr.fit(X_train,y_train)
     print(f'Feature Importances: {regr.feature_importances_}')
@@ -80,6 +84,7 @@ def boost():
 
     print(f'R^2: {regr.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
+    print(f'MAE: {mean_absolute_error(y_test,prediction)}')
 
     dump(regr,'models/gradientboost.joblib')
 
