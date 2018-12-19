@@ -15,13 +15,6 @@ from root_mean_squared_error import root_mean_squared_error
 from object_detection import object_detector
 from joblib import load
 
-# try:
-#     from object_detection import object_detector
-# except:
-#     import subprocess
-#     subprocess.run(['pip','install','https://github.com/OlafenwaMoses/ImageAI/releases/download/2.0.2/imageai-2.0.2-py3-none-any.whl'])
-#     from object_detection import object_detector
-
 s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
 
@@ -154,11 +147,15 @@ def predict_height():
         if file.filename == '':
             return 'Error: No file name, please try again'
         if file and allowed_file(file.filename):
+            K.clear_session()
             image, result_df = object_detector([file.filename],[file])
             scaler = load('models/scaler.joblib')
-            result_df['banana_box'] = result_df[['banana_box_point1','banana_box_point2','banana_box_point3','banana_box_point4']].mean(axis=1)
-            result_df['person_box'] = result_df[['person_box_point1','person_box_point2','person_box_point3','person_box_point4']].mean(axis=1)
-            X = scaler.transform(result_df.drop(columns=['filename']))
+            try:
+                result_df['banana_box'] = result_df[['banana_box_point1','banana_box_point2','banana_box_point3','banana_box_point4']].mean(axis=1)
+                result_df['person_box'] = result_df[['person_box_point1','person_box_point2','person_box_point3','person_box_point4']].mean(axis=1)
+                X = scaler.transform(result_df.drop(columns=['filename']))
+            except:
+                return 'Error: A prediction could not be made on this image'
             model = load('models/randomforest.joblib')
             pred = model.predict(X)[0]
             ft = int(pred // 12)
@@ -178,4 +175,4 @@ def form():
     return render_template('form.html')
 
 if __name__ == '__main__':
-    application.run(debug=True)
+    application.run()
