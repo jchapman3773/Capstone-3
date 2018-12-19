@@ -33,7 +33,7 @@ def data(remove_cols):
 
 def linear():
     print('---------- LINEAR ELASTIC NET MODEL ----------')
-    remove_cols = ['filename','image','index_x','index_y',
+    remove_cols = ['filename','image','index_x','index_y','image_x','image_y',
                     'banana_box_point1','banana_box_point2','banana_box_point3','banana_box_point4',
                     'person_box_point1','person_box_point2','person_box_point3','person_box_point4']
     X_train, X_test, y_train, y_test, X = data(remove_cols)

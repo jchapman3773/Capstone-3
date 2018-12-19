@@ -6,10 +6,9 @@ import pandas as pd
 import numpy as np
 
 
-
-def object_detector(dir):
-    filenames = os.listdir(dir)
+def object_detector(filenames,filepaths):
     results_df = pd.DataFrame()
+    images = {}
 
     execution_path = os.getcwd()
 
@@ -18,12 +17,12 @@ def object_detector(dir):
     detector.setModelPath( os.path.join(execution_path , "models/resnet50_coco_best_v2.0.1.h5"))
     detector.loadModel()
     custom_objects = detector.CustomObjects(person=True, banana=True)
-    for f in filenames:
-        img_path = os.path.join(dir,f)
+    for f,fp in zip(filenames,filepaths):
+
 
         try:
             detections = detector.detectCustomObjectsFromImage(
-                                    input_image=img_path,
+                                    input_image=fp,
                                     output_type='array',
                                     custom_objects=custom_objects,
                                     minimum_percentage_probability=10,
@@ -40,11 +39,12 @@ def object_detector(dir):
             print(f'Error! No person found in image {f}!')
             continue
         else:
-            img = Image.fromarray(detections[0])
-            img.save(f'../data/predictions/{f}')
+            images[f] = Image.fromarray(detections[0])
             df['image'] = np.asarray(detections[2])
             df = df.sort_values(by=['percentage_probability'],ascending=False).groupby('name').head(1)
             dict = {'filename':f}
+            dict['image_x'] = detections[0].shape[0]
+            dict['image_y'] = detections[0].shape[1]
             for row in df.values:
                 dict[f'{row[1]}_box_point1'] = row[0][0]
                 dict[f'{row[1]}_box_point2'] = row[0][1]
@@ -54,11 +54,21 @@ def object_detector(dir):
                 dict[f'{row[1]}_x'] = row[3].shape[0]
                 dict[f'{row[1]}_y'] = row[3].shape[1]
             results_df = results_df.append(dict,ignore_index=True)
-            print(f'Saved Image {f} Predictions')
+            print(f'{f} Predicted')
 
-    engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
-    results_df.to_sql('regression',con=engine,if_exists='replace')
+    return images, results_df
 
 if __name__ == '__main__':
     dir = '/home/julia/Documents/Galvanize/Capstone-3/data/uploads'
-    object_detector(dir)
+    filenames = os.listdir(dir)
+    filepaths = []
+    for f in filenames:
+        filepaths.append(os.path.join(dir,f))
+
+    images, results_df = object_detector(filenames,filepaths)
+
+    for key,value in images.items():
+        value.save(f'../data/predictions/{key}')
+
+    engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
+    results_df.to_sql('regression',con=engine,if_exists='replace')
