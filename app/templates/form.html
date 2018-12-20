@@ -4,17 +4,49 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+      <style>
+          body, html {
+            height: 100%;
+            margin: 0;
+          }
+
+          .bg {
+            /* The image used */
+            background-image: url("/static/background.png");
+
+            /* Full height */
+            height: 100%;
+
+            /* Center and scale the image nicely */
+            background-position: center;
+            /* background-attachment: fixed; */
+            /* background-repeat: no-repeat; */
+            background-size: cover;
+          }
+
+          .container {
+          background: #F9D13B;
+          width: 51%;
+          }
+      </style>
+
 </head>
 
 <body>
-  <div class="jumbotron" align=center>
-    <form method=POST enctype=multipart/form-data>
-        <div class="form-group">
-            <label for="comments">Questions, Comments, Errors, etc:</label>
-            <br>
-            <input type="comments" class="form-control" placeholder="Type Here" name="comments">
+    <div class='bg'>
+    <div class='container'
+        <div class="jumbotron" align=center>
+            <form method=POST enctype=multipart/form-data>
+                <div class="form-group">
+                    <br>
+                    <h1>Questions, Comments, Errors, etc:</h1>
+                    <br>
+                    <input type="comments" class="form-control" placeholder="Type Here" name="comments">
+                </div>
+                <button type="submit" class="btn btn-primary" value=Upload>Submit</button>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary" value=Upload>Submit</button>
-    </form>
-  </div>
+    </div>
+    </div>
 </body>

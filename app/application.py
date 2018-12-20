@@ -1,5 +1,6 @@
 import pandas as pd
 from io import BytesIO
+from base64 import b64encode
 from uuid import uuid4
 from flask import Flask, request, redirect, render_template
 from werkzeug.utils import secure_filename
@@ -110,7 +111,7 @@ def xception_class():
             key = {0:'a Banana', 1:'both a Banana and a Person', 2:'neither a Banana nor a Person', 3:'a Person'}
             pred = round(pred[0,idx]*100,2)
             key[idx]
-            return render_template('prediction_answer.html',variable=[f'Your image has {key[idx]}',f'with {pred}% confidence'])
+            return render_template('prediction_answer.html',variable=[f'Your image has {key[idx]}',f'with {pred}% confidence',''])
         else:
             return redirect(request.url)
     return render_template('prediction.html',Title='Classification Prediction with Xception')
@@ -133,7 +134,7 @@ def xception_reg():
             pred = model.predict(x)[0][0]
             ft = int(pred // 12)
             inch = round(pred % 12,1)
-            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in',''])
+            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in','',''])
         else:
             return redirect(request.url)
     return render_template('prediction.html',Title='Regression Prediction with Xception')
@@ -149,18 +150,44 @@ def predict_height():
         if file and allowed_file(file.filename):
             K.clear_session()
             image, result_df = object_detector([file.filename],[file])
+            if len(image) == 0:
+                return 'Error: Image could not be used.'
+
+            # format image for return in html
+            output = BytesIO()
+            image = image[file.filename]
+            try:
+                if image.format.lower() not in ALLOWED_EXTENSIONS:
+                    format = 'JPEG'
+                else:
+                    format = image.format
+            except:
+                format = 'JPEG'
+            image.save(output, format)
+            contents = b64encode(output.getvalue()).decode()
+            output.close()
+            tag = f'data:image/{format};base64,{contents}'
+
+            # scale and clean data
             scaler = load('models/scaler.joblib')
             try:
                 result_df['banana_box'] = result_df[['banana_box_point1','banana_box_point2','banana_box_point3','banana_box_point4']].mean(axis=1)
                 result_df['person_box'] = result_df[['person_box_point1','person_box_point2','person_box_point3','person_box_point4']].mean(axis=1)
                 X = scaler.transform(result_df.drop(columns=['filename']))
             except:
-                return 'Error: A prediction could not be made on this image'
+                return '''
+                <!DOCTYPE html>
+                <img src={0} class="img-responsive" width='400'>
+                <p>Error: A prediction could not be made using this image
+                <br>
+                <i>Either a banana or person could not be detected.</i></p>'''.format(tag)
+
+            # make final prediction with random forest
             model = load('models/randomforest.joblib')
             pred = model.predict(X)[0]
             ft = int(pred // 12)
             inch = round(pred % 12,1)
-            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in',''])
+            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in','',tag])
         else:
             return redirect(request.url)
     return render_template('prediction.html',Title='Height Prediction with RetinaNet Object Detection and Random Forest Regressor')
@@ -175,4 +202,4 @@ def form():
     return render_template('form.html')
 
 if __name__ == '__main__':
-    application.run()
+    application.run(debug=True)

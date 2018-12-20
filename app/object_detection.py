@@ -32,6 +32,8 @@ def object_detector(filenames,filepaths):
             continue
 
         df = pd.DataFrame(detections[1])
+        images[f] = Image.fromarray(detections[0])
+        
         if 'banana' not in df.name.values:
             print(f'Error! No banana found in image {f}!')
             continue
@@ -39,7 +41,6 @@ def object_detector(filenames,filepaths):
             print(f'Error! No person found in image {f}!')
             continue
         else:
-            images[f] = Image.fromarray(detections[0])
             df['image'] = np.asarray(detections[2])
             df = df.sort_values(by=['percentage_probability'],ascending=False).groupby('name').head(1)
             dict = {'filename':f}
