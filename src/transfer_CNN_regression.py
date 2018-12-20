@@ -115,6 +115,7 @@ class TransferModel():
         return self.model
 
     def _change_trainable_layers(self, trainable_index):
+        print(f'Unfreezing layers {trainable_index}+')
         for layer in self.model.layers[:trainable_index]:
             layer.trainable = False
         for layer in self.model.layers[trainable_index:]:
@@ -152,14 +153,14 @@ class TransferModel():
 
         # train head, then chunks
         histories = []
-        for i, _ in enumerate(freeze_indices):
+        for i, freeze in enumerate(freeze_indices):
             if i == 0:
                 e = warmup_epochs
                 opt = optimizers[0]
             else:
                 e = self.epochs
                 opt = optimizers[1]
-            self._change_trainable_layers(freeze_indices[i])
+            self._change_trainable_layers(freeze)
             self.model.compile(optimizer=opt,
                           loss=root_mean_squared_error)
 
@@ -205,6 +206,7 @@ class TransferModel():
         plt.axvline(5,color='k',linestyle='dotted')
         plt.axvline(15,color='k',linestyle='dotted')
         plt.axvline(25,color='k',linestyle='dotted')
+        # plt.axvline(35,color='k',linestyle='dotted')
         plt.legend(['Train', 'Test'], loc='upper left')
         plt.tight_layout()
         plt.savefig('../graphics/Transfer_CNN_reg_rmse_hist.png')
@@ -219,7 +221,7 @@ if __name__ == '__main__':
     freeze_indices = [132, 126, 116 ,106]
     optimizers = [Adam(lr=0.0005), Adam(lr=0.00005)]
     histories = transfer_CNN.fit(freeze_indices,optimizers)
-    pickle.dump(histories, open('hist_reg.pkl', 'wb'))
+    pickle.dump(histories, open('models/hist_reg.pkl', 'wb'))
 
     transfer_CNN.plot_history(histories)
 
