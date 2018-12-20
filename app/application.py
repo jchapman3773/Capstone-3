@@ -15,6 +15,7 @@ from fix_image_orientation import fix_orientation
 from root_mean_squared_error import root_mean_squared_error
 from object_detection import object_detector
 from joblib import load
+from PIL import Image
 
 s3 = resource('s3')
 bucket = s3.Bucket('bananaforscale')
@@ -22,6 +23,23 @@ bucket = s3.Bucket('bananaforscale')
 engine = create_engine('postgresql://banana:forscale@bananaforscale.ckaldwfguyw5.us-east-2.rds.amazonaws.com:5432/bananaforscale')
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
+def create_tag(img):
+    # format image for return in html
+    output = BytesIO()
+    try:
+        if img.format.lower() not in ALLOWED_EXTENSIONS:
+            format = 'JPEG'
+        else:
+            format = img.format
+    except:
+        format = 'JPEG'
+    img.save(output, format)
+    contents = b64encode(output.getvalue()).decode()
+    output.close()
+    tag = f'data:image/{format};base64,{contents}'
+
+    return tag
 
 application = Flask(__name__)
 
@@ -111,7 +129,12 @@ def xception_class():
             key = {0:'a Banana', 1:'both a Banana and a Person', 2:'neither a Banana nor a Person', 3:'a Person'}
             pred = round(pred[0,idx]*100,2)
             key[idx]
-            return render_template('prediction_answer.html',variable=[f'Your image has {key[idx]}',f'with {pred}% confidence',''])
+
+            # process image for html
+            img = Image.open(file)
+            tag = create_tag(img)
+
+            return render_template('prediction_answer.html',variable=[f'Your image has {key[idx]}',f'with {pred}% confidence',tag])
         else:
             return redirect(request.url)
     return render_template('prediction.html',Title='Classification Prediction with Xception')
@@ -134,7 +157,12 @@ def xception_reg():
             pred = model.predict(x)[0][0]
             ft = int(pred // 12)
             inch = round(pred % 12,1)
-            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in','',''])
+
+            # process image for html
+            img = Image.open(file)
+            tag = create_tag(img)
+
+            return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in','',tag])
         else:
             return redirect(request.url)
     return render_template('prediction.html',Title='Regression Prediction with Xception')
@@ -149,24 +177,13 @@ def predict_height():
             return 'Error: No file name, please try again'
         if file and allowed_file(file.filename):
             K.clear_session()
-            image, result_df = object_detector([file.filename],[file])
-            if len(image) == 0:
+            img, result_df = object_detector([file.filename],[file])
+            if len(img) == 0:
                 return 'Error: Image could not be used.'
 
             # format image for return in html
-            output = BytesIO()
-            image = image[file.filename]
-            try:
-                if image.format.lower() not in ALLOWED_EXTENSIONS:
-                    format = 'JPEG'
-                else:
-                    format = image.format
-            except:
-                format = 'JPEG'
-            image.save(output, format)
-            contents = b64encode(output.getvalue()).decode()
-            output.close()
-            tag = f'data:image/{format};base64,{contents}'
+            img = img[file.filename]
+            tag = create_tag(img)
 
             # scale and clean data
             scaler = load('models/scaler.joblib')
