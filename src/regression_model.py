@@ -41,7 +41,7 @@ def linear():
     model = ElasticNetCV()
     model.fit(X_train,y_train)
     prediction = model.predict(X_test)
-    [print(x,Y) for x, Y in zip(prediction,y_test)]
+    # [print(x,Y) for x, Y in zip(prediction,y_test)]
 
     print(f'R^2: {model.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
@@ -59,18 +59,18 @@ def forest():
     print('---------- RANDOM FOREST MODEL ----------')
     remove_cols = ['filename','image','index_x','index_y']
     X_train, X_test, y_train, y_test, X = data(remove_cols)
-    # print(X.info())
     regr = RandomForestRegressor()
     regr.fit(X_train,y_train)
     print(f'Feature Importances: {regr.feature_importances_}')
     prediction = regr.predict(X_test)
-    [print(x,Y) for x, Y in zip(prediction,y_test)]
+    # [print(x,Y) for x, Y in zip(prediction,y_test)]
 
     print(f'R^2: {regr.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
     print(f'MAE: {mean_absolute_error(y_test,prediction)}')
 
     dump(regr,'models/randomforest.joblib')
+    # print(X.info())
 
 def boost():
     print('---------- GRADIENT BOOST MODEL ----------')
@@ -80,13 +80,14 @@ def boost():
     regr.fit(X_train,y_train)
     print(f'Feature Importances: {regr.feature_importances_}')
     prediction = regr.predict(X_test)
-    [print(x,Y) for x, Y in zip(prediction,y_test)]
+    # [print(x,Y) for x, Y in zip(prediction,y_test)]
 
     print(f'R^2: {regr.score(X_test,y_test)}')
     print(f'RMSE: {sqrt(mean_squared_error(y_test,prediction))}')
     print(f'MAE: {mean_absolute_error(y_test,prediction)}')
 
     dump(regr,'models/gradientboost.joblib')
+    print(X.info())
 
 if __name__ == '__main__':
     linear()
