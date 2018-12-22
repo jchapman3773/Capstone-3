@@ -207,7 +207,7 @@ def predict_height():
             return render_template('prediction_answer.html',variable=[f'{ft} ft {inch} in','',tag])
         else:
             return redirect(request.url)
-    return render_template('prediction.html',Title='Height Prediction with RetinaNet Object Detection and Random Forest Regressor')
+    return render_template('prediction.html',Title='Height Prediction with Object Detection')
 
 @application.route('/form', methods=['GET','POST'])
 def form():
